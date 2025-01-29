@@ -243,4 +243,141 @@ public class TicketsCatalogControllerTests
         Assert.IsNotNull(notFoundResult);
         Assert.AreEqual(404, notFoundResult.StatusCode);
     }
+
+    [Test]
+    public async Task AddUserToCatalog_ShouldReturnBadRequest_WhenUserIsNull()
+    {
+        // Arrange
+        var catalogId = 1;
+        var userId = 1;
+        User userToAdd = null;
+
+        // Act
+        var result = await _controller.AddUserToCatalog(catalogId, userId, userToAdd);
+
+        // Assert
+        Assert.IsInstanceOf<BadRequestObjectResult>(result);
+    }
+
+    [Test]
+    public async Task AddUserToCatalog_ShouldReturnNotFound_WhenCatalogIsNotFound()
+    {
+        // Arrange
+        var userId = 123;
+        var catalog = new TicketsCatalog
+        {
+            Id = 1,
+            Name = "New Catalog",
+            DataTime = DateTime.Now,
+            Owner = new User { Id = 1, Name = "Owner Name" },
+            Users = new List<User> { new User { Id = 2, Name = "User 1" } },
+            Tasks = new List<Ticket> { new Ticket { Id = 1, Description = "Task 1" } }
+        };
+        _mockService.Setup(s => s.CreateCatalogAsync(catalog, userId));
+
+        // Act
+        var result = await _controller.AddUserToCatalog(2, userId, new User { Id = 3, Name = "User 1" });
+
+        // Assert
+        Assert.IsInstanceOf<NotFoundObjectResult>(result);
+    }
+
+    [Test]
+    public async Task AddUserToCatalog_ShouldReturnNoContent_WhenUserIsAddedSuccessfully()
+    {
+        // Arrange
+        var catalogId = 1;
+        var userId = 1;
+        var userToAdd = new User { Id = 2, Name = "John Doe" };
+        var catalog = new TicketsCatalog { Id = catalogId, Name = "Test Catalog", Owner = new User { Id = userId, Name = "Owner" } };
+        _mockService.Setup(s => s.GetCatalogByIdAsync(catalogId, userId)).ReturnsAsync(catalog);
+        _mockService.Setup(s => s.AddUserToCatalogAsync(catalogId, userId, userToAdd)).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.AddUserToCatalog(catalogId, userId, userToAdd);
+
+        // Assert
+        Assert.IsInstanceOf<NoContentResult>(result);
+    }
+
+    [Test]
+    public async Task DeleteUserFromCatalog_ShouldReturnNotFound_WhenCatalogIsNotFound()
+    {
+        // Arrange
+        var catalog = new TicketsCatalog
+        {
+            Id = 1,
+            Name = "New Catalog",
+            DataTime = DateTime.Now,
+            Owner = new User { Id = 1, Name = "Owner Name" },
+            Users = new List<User> { new User { Id = 2, Name = "User 1" } },
+            Tasks = new List<Ticket> { new Ticket { Id = 1, Description = "Task 1" } }
+        };
+        _mockService.Setup(s => s.CreateCatalogAsync(catalog, 1));
+
+        // Act
+        var result = await _controller.DeleteUserFromCatalog(2, 1, 2);
+
+        // Assert
+        Assert.IsInstanceOf<NotFoundObjectResult>(result);
+    }
+
+    [Test]
+    public async Task DeleteUserFromCatalog_ShouldReturnNoContent_WhenUserIsDeletedSuccessfully()
+    {
+        // Arrange
+        var catalogId = 1;
+        var userId = 1;
+        var userToRemoveId = 2;
+        var catalog = new TicketsCatalog { Id = catalogId, Name = "Test Catalog", Owner = new User { Id = userId, Name = "Owner" } };
+        _mockService.Setup(s => s.GetCatalogByIdAsync(catalogId, userId)).ReturnsAsync(catalog);
+        _mockService.Setup(s => s.DeleteUserFromCatalogAsync(catalogId, userId, userToRemoveId)).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.DeleteUserFromCatalog(catalogId, userId, userToRemoveId);
+
+        // Assert
+        Assert.IsInstanceOf<NoContentResult>(result);
+    }
+
+    [Test]
+    public async Task GetUsersByCatalogId_ShouldReturnOk_WhenUsersAreFound()
+    {
+        // Arrange
+        var catalogId = 1;
+        var userId = 1;
+        var users = new List<User>
+        {
+            new User { Id = 1, Name = "User 1" },
+            new User { Id = 2, Name = "User 2" }
+        };
+
+        _mockService.Setup(s => s.GetAllUsersByCatalogIdAsync(catalogId, userId)).ReturnsAsync(users);
+
+        // Act
+        var result = await _controller.GetUsersByCatalogId(catalogId, userId);
+        var okResult = result.Result as OkObjectResult;
+
+        // Assert
+        Assert.IsInstanceOf<OkObjectResult>(okResult);
+        Assert.AreEqual(users, okResult.Value);
+    }
+
+    [Test]
+    public async Task GetUsersByCatalogId_ShouldReturnNotFound_WhenNoUsersAreFound()
+    {
+        // Arrange
+        var catalogId = 1;
+        var userId = 1;
+        var users = new List<User>();
+
+        _mockService.Setup(s => s.GetAllUsersByCatalogIdAsync(catalogId, userId)).ReturnsAsync(users);
+
+        // Act
+        var result = await _controller.GetUsersByCatalogId(catalogId, userId);
+        var notFoundResult = result.Result as NotFoundObjectResult;
+
+        // Assert
+        Assert.IsInstanceOf<NotFoundObjectResult>(notFoundResult);
+    }
 }

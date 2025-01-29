@@ -23,7 +23,7 @@ namespace TC.Persistence.Command
                 throw new AccessDeniedException();
 
             var update = Builders<TicketsCatalog>.Update
-                .PullFilter(tc => tc.Users, user => user.Id == userId);
+                .PullFilter(tc => tc.Users, user => user.Id == userToRemoveId);
 
             await _context.UpdateOneAsync(tc => tc.Id == catalogId, update);
         }

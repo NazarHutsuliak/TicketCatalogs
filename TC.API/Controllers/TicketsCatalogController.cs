@@ -117,7 +117,7 @@ namespace TC.API.Controllers
         [HttpGet("{catalogId}/users")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<List<int>>> GetUsersByCatalogId(int catalogId, int userId)
+        public async Task<ActionResult<List<User>>> GetUsersByCatalogId(int catalogId, int userId)
         {
             var users = await _service.GetAllUsersByCatalogIdAsync(catalogId, userId);
             if (users == null || users.Count == 0)
